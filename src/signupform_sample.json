@@ -1,0 +1,121 @@
+[{
+        "name": "aaaa bbbb",
+        "type": "User",
+        "email": "aaaa@bbbb.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "apples@pear",
+        "confirm_password": "apples@pear"
+
+    },
+    {
+        "name": "aaab bbbc",
+        "type": "User",
+        "email": "aaab@bbbc.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "pear@apples",
+        "confirm_password": "pear@apples"
+
+    },
+    {
+        "name": "aaac bbbd",
+        "type": "User",
+        "email": "aaac@bbbd.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "apples@grape",
+        "confirm_password": "apples@grape"
+
+    },
+    {
+        "name": "aaad bbbe",
+        "type": "User",
+        "email": "aaad@bbbe.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "grape@apples",
+        "confirm_password": "grape@apples"
+
+    },
+    {
+        "name": "aaae bbbf",
+        "type": "User",
+        "email": "aaae@bbbf.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "mango@plum",
+        "confirm_password": "mango@plum"
+
+    },
+    {
+        "name": "aaaf bbbg",
+        "type": "Merchant",
+        "email": "aaaf@bbbg.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "plum@mango",
+        "confirm_password": "plum@mango"
+
+    },
+    {
+        "name": "aaag bbbh",
+        "type": "Merchant",
+        "email": "aaag@bbbh.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "kiwi@lime",
+        "confirm_password": "kiwi@lime"
+
+    },
+    {
+        "name": "aaah bbbi",
+        "type": "Merchant",
+        "email": "aaah@bbbi.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "lime@kiwi",
+        "confirm_password": "lime@kiwi"
+
+    },
+    {
+        "name": "aaai bbbj",
+        "type": "Merchant",
+        "email": "aaai@bbbj.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "melon@peach",
+        "confirm_password": "melon@peach"
+
+    },
+    {
+        "name": "aaaj bbbk",
+        "type": "Merchant",
+        "email": "aaaj@bbbk.com",
+        "accountType": "",
+        "bankName": "SBI",
+        "country": "India",
+        "currency": "Rupees",
+        "password": "peach@melon",
+        "confirm_password": "peach@melon"
+
+    }
+]

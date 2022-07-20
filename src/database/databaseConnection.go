@@ -22,7 +22,7 @@ const colTransactions = "transaction"
 var CollectionUsers *mongo.Collection
 var CollectionTransactions *mongo.Collection
 
-func init() {
+func Init() {
 	//client options
 
 	clientOption := options.Client().ApplyURI(connectionString)
@@ -46,6 +46,7 @@ func GetCollectionTransactions() *mongo.Collection {
 	return CollectionTransactions
 }
 func InsertUser(user models.User) {
+	user.Id = primitive.NewObjectID()
 	inserted, err := CollectionUsers.InsertOne(context.Background(), user)
 	if err != nil {
 		log.Fatal(err)
@@ -73,6 +74,7 @@ func UpdateUser(user models.User) {
 }
 
 func InsertTransaction(transaction models.Transaction) {
+	transaction.Id = primitive.NewObjectID()
 	inserted, err := CollectionTransactions.InsertOne(context.Background(), transaction)
 	if err != nil {
 		log.Fatal(err)
@@ -97,4 +99,38 @@ func UpdateTransaction(transaction models.Transaction) {
 		log.Println(utility.Info("could not update transactions in mongo"))
 	}
 
+}
+
+func FindUser(email string) (models.User, bool, error) {
+	// A slice of tasks for storing the decoded documents
+	filter := bson.M{"email": email}
+	var users []*models.User
+	u := models.User{}
+	cur, err := CollectionUsers.Find(context.Background(), filter)
+	if err != nil {
+		return u, false, err
+	}
+
+	for cur.Next(context.Background()) {
+		u = models.User{}
+		err := cur.Decode(&u)
+		if err != nil {
+			return u, false, err
+		}
+
+		users = append(users, &u)
+	}
+
+	if err := cur.Err(); err != nil {
+		return u, false, err
+	}
+
+	// once exhausted, close the cursor
+	cur.Close(context.Background())
+
+	if len(users) == 0 {
+		return u, false, mongo.ErrNoDocuments
+	}
+
+	return *users[0], true, nil
 }
