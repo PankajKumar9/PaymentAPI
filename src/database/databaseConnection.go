@@ -46,7 +46,10 @@ func GetCollectionTransactions() *mongo.Collection {
 	return CollectionTransactions
 }
 func InsertUser(user models.User) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	user.Id = primitive.NewObjectID()
+	log.Println(utility.Info(fmt.Sprintf("%v", user)))
 	inserted, err := CollectionUsers.InsertOne(context.Background(), user)
 	if err != nil {
 		log.Fatal(err)
@@ -73,7 +76,7 @@ func UpdateUser(user models.User) {
 
 }
 
-func InsertTransaction(transaction models.Transaction) {
+func InsertTransaction(transaction models.Transaction) primitive.ObjectID {
 	transaction.Id = primitive.NewObjectID()
 	inserted, err := CollectionTransactions.InsertOne(context.Background(), transaction)
 	if err != nil {
@@ -81,7 +84,7 @@ func InsertTransaction(transaction models.Transaction) {
 	}
 
 	fmt.Println("Inserted Transaction in db with id", inserted.InsertedID)
-
+	return transaction.Id
 }
 func UpdateTransaction(transaction models.Transaction) {
 
@@ -133,4 +136,39 @@ func FindUser(email string) (models.User, bool, error) {
 	}
 
 	return *users[0], true, nil
+}
+
+func FindTransaction(Id primitive.ObjectID) (models.Transaction, bool, error) {
+	// A slice of tasks for storing the decoded documents
+
+	filter := bson.M{"Id": Id}
+	var transactions []*models.Transaction
+	u := models.Transaction{}
+	cur, err := CollectionTransactions.Find(context.Background(), filter)
+	if err != nil {
+		return u, false, err
+	}
+
+	for cur.Next(context.Background()) {
+		u = models.Transaction{}
+		err := cur.Decode(&u)
+		if err != nil {
+			return u, false, err
+		}
+
+		transactions = append(transactions, &u)
+	}
+
+	if err := cur.Err(); err != nil {
+		return u, false, err
+	}
+
+	// once exhausted, close the cursor
+	cur.Close(context.Background())
+
+	if len(transactions) == 0 {
+		return u, false, mongo.ErrNoDocuments
+	}
+
+	return *transactions[0], true, nil
 }

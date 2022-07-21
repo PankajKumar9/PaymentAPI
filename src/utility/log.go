@@ -87,7 +87,8 @@ func intmonth(month string) string {
 
 //sadffadsfdsfdsfdssdfaafsfdasfsaffda
 
-func Info(s string) string{
+func Info(x interface{}) string {
+	s := fmt.Sprintf("%v", x)
 	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", 34, s)
 
 }

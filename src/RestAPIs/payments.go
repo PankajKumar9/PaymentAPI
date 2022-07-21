@@ -6,14 +6,22 @@ import (
 )
 
 func InitApis(r *routing.Router) {
-
-	//Push order by API
-	r.Post("/api/movie", func(c *routing.Context) error {
-		return conf.Firstlogic(string(c.PostBody()), c)
-		//return somefolder.somefunc(string(c.PostBody()), c)
-	})
+//TODO: paths to be in cosntants package
+	
 	r.Post("/api/signup", func(c *routing.Context) error {
 		return conf.Signup(string(c.PostBody()), c)
+		//return somefolder.somefunc(string(c.PostBody()), c)
+	})
+	r.Post("/api/credit", func(c *routing.Context) error {
+		return conf.Credit(string(c.PostBody()), c)
+		//return somefolder.somefunc(string(c.PostBody()), c)
+	})
+	r.Post("/api/debit", func(c *routing.Context) error {
+		return conf.Debit(string(c.PostBody()), c)
+		//return somefolder.somefunc(string(c.PostBody()), c)
+	})
+	r.Post("/api/send", func(c *routing.Context) error {
+		return conf.Send(string(c.PostBody()), c)
 		//return somefolder.somefunc(string(c.PostBody()), c)
 	})
 }
