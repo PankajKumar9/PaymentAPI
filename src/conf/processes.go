@@ -33,7 +33,7 @@ func CreateUsers() {
 	}
 }
 
-func process(email string, amount float64, mode string, User models.User) (error, string) {
+func process(email string, amount float64, mode string, User models.User, from string, to string, kind string) (error, string) {
 	if mode == constants.DEBIT && User.Balance < amount {
 		return errors.New(constants.INSUFFICIENT_FUNDS), ""
 	}
@@ -41,6 +41,7 @@ func process(email string, amount float64, mode string, User models.User) (error
 	t.Id = database.InsertTransaction(t)
 	t.Info.Account = User.AccountNumber
 	t.Info.Amount = amount
+	t.Kind = kind
 	if mode == constants.CREDIT {
 		User.Balance += amount
 	} else {
@@ -48,6 +49,8 @@ func process(email string, amount float64, mode string, User models.User) (error
 	}
 	t.Info.Date = time.Now().GoString()
 	t.Info.User = User
+	t.Info.From = from
+	t.Info.To = to
 	t.Info.Balance = User.Balance
 	t.Info.Status = mode
 	database.UpdateTransaction(t)
@@ -65,15 +68,15 @@ func CancelTransaction(ID string, flag bool) {
 	mode := t.Info.Status
 	transactionId := ""
 	if mode == constants.CREDIT {
-		_, transactionId = process(User.Email, t.Info.Amount, constants.DEBIT, User)
+		_, transactionId = process(User.Email, t.Info.Amount, constants.DEBIT, User, t.Info.To, t.Info.From, constants.CANCELLATION)
 	} else {
-		_, transactionId = process(User.Email, t.Info.Amount, constants.CREDIT, User)
+		_, transactionId = process(User.Email, t.Info.Amount, constants.CREDIT, User, t.Info.To, t.Info.From, constants.CANCELLATION)
 	}
 	t.CancellationTransactionId = transactionId
-	database.UpdateTransaction(t)
+	database.UpdateTransaction(*t)
 	//TODO make this dynamic with process function itself
 	TransId, _ := primitive.ObjectIDFromHex(transactionId)
 	t2, _, _ := database.FindTransaction(TransId)
 	t2.ParentTransactionId = t.Id.Hex()
-	database.UpdateTransaction(t2)
+	database.UpdateTransaction(*t2)
 }

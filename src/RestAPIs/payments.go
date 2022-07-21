@@ -24,6 +24,10 @@ func InitApis(r *routing.Router) {
 		return conf.Send(string(c.PostBody()), c)
 		//return somefolder.somefunc(string(c.PostBody()), c)
 	})
+	r.Post("/api/refund", func(c *routing.Context) error {
+		return conf.RefundResponse(string(c.PostBody()), c)
+		//return somefolder.somefunc(string(c.PostBody()), c)
+	})
 	r.Get("/api/history", func(c *routing.Context) error {
 		conf.History(c)
 		return nil

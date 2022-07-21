@@ -3,11 +3,11 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Transaction struct {
-	Id   primitive.ObjectID `json:"_id" bson:"_id"`
-	Info TransactionData    `json:"info" bson:"info"`
-
-	CancellationTransactionId string `json:"cancellationTransactionId" bson:"cancellationTransactionId"`
-	ParentTransactionId       string `json:"parentTransactionId" bson:"parentTransactionId"`
+	Id                        primitive.ObjectID `json:"_id" bson:"_id"`
+	Info                      TransactionData    `json:"info" bson:"info"`
+	Kind                      string             `json:"kind" bson:"kind"`
+	CancellationTransactionId string             `json:"cancellationTransactionId" bson:"cancellationTransactionId"`
+	ParentTransactionId       string             `json:"parentTransactionId" bson:"parentTransactionId"`
 
 	InverseTranactionId string `json:"inverseTransactionId" bson:"inverseTransactionId"`
 }
@@ -18,7 +18,10 @@ type CreditRequest struct {
 }
 
 type TransactionData struct {
-	User           User    `json:"user" bson:"user"`
+	User User   `json:"user" bson:"user"`
+	From string `json:"from" bson:"from"`
+	To   string `json:"to" bson:"to"`
+
 	Account        string  `json:"account" bson:"account"`
 	Amount         float64 `json:"amount" bson:"amount"`
 	Balance        float64 `json:"balance" bson:"balance"`

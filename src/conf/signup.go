@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/PankajKumar9/PaymentAPI/src/conf/constants"
 	"github.com/PankajKumar9/PaymentAPI/src/database"
 	"github.com/PankajKumar9/PaymentAPI/src/models"
+	"github.com/PankajKumar9/PaymentAPI/src/utility"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	routing "github.com/qiangxue/fasthttp-routing"
@@ -34,22 +37,35 @@ func Signup(signupform string, c *routing.Context) error {
 }
 
 func Credit(reqform string, c *routing.Context) error {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println(utility.Info(reqform))
 	req := &models.CreditRequest{}
 	err := json.Unmarshal([]byte(reqform), req)
 	if err != nil {
 		return err
 	}
+	log.Println(utility.Info(*req))
 	pass, msg := ValidateRequest(*req)
 	if !pass {
 		return errors.New(msg)
 	}
-	User, pass, _ := database.FindUser(req.Email)
+	User, pass, err := database.FindUser(req.Email)
+	if err != nil {
+		log.Println(utility.Info("error in finding this user"))
+	}
+	if !pass {
+		log.Println(utility.Info("This user does not even exists"))
+	}
+	log.Println(utility.Info(User))
 	//TODO will deal with passwordHash and not the actual passwords
-	if req.Password != User.Password {
+
+	if strings.Compare(req.Password, User.Password) != 0 {
 		//TODO this static string has to be in constants package
+		log.Println(utility.Info(req.Password))
+		log.Println(utility.Info(User.Password))
 		return errors.New("INCORRECT PASSWORD")
 	}
-	err, _ = process(req.Email, req.Amount, constants.CREDIT, User)
+	err, _ = process(req.Email, req.Amount, constants.CREDIT, User, User.Email, User.Email, constants.CREDIT)
 	return err
 
 }
@@ -69,7 +85,7 @@ func Debit(reqform string, c *routing.Context) error {
 		//TODO this static string has to be in constants package
 		return errors.New("INCORRECT PASSWORD")
 	}
-	err, _ = process(req.Email, req.Amount, constants.DEBIT, User)
+	err, _ = process(req.Email, req.Amount, constants.DEBIT, User, User.Email, User.Email, constants.DEBIT)
 	return err
 }
 func Send(reqform string, c *routing.Context) error {
@@ -85,6 +101,8 @@ func Send(reqform string, c *routing.Context) error {
 	if !pass {
 		return errors.New(msg)
 	}
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println(utility.Info(*req))
 	User, pass, _ := database.FindUser(req.From.Email)
 	//TODO will deal with passwordHash and not the actual passwords
 	if req.From.Password != User.Password {
@@ -92,26 +110,26 @@ func Send(reqform string, c *routing.Context) error {
 		return errors.New("INCORRECT PASSWORD")
 	}
 	if User.Type != constants.USER {
-		return errors.New(constants.CANNOT_TRANSFER)
+		return errors.New(constants.INVALID_USER_TYPE)
 	}
 	Merchant, pass, _ := database.FindUser(req.To.Email)
 	if Merchant.Type != constants.MERCHANT {
-		return errors.New(constants.CANNOT_TRANSFER)
+		return errors.New(constants.INVALID_MERCHANT_TYPE)
 	}
-	err, Id1 := process(req.From.Email, req.From.Amount, constants.DEBIT, User)
+	err, Id1 := process(req.From.Email, req.From.Amount, constants.DEBIT, User, req.From.Email, req.To.Email, constants.PAYMENT)
 	if err != nil {
 		return err
 	}
-	err, Id2 := process(req.To.Email, req.From.Amount, constants.CREDIT, Merchant)
+	err, Id2 := process(req.To.Email, req.From.Amount, constants.CREDIT, Merchant, req.From.Email, req.To.Email, constants.PAYMENT)
 	primitiveID1, _ := primitive.ObjectIDFromHex(Id1)
 	t, _, _ := database.FindTransaction(primitiveID1)
 	t.InverseTranactionId = Id2
-	database.UpdateTransaction(t)
+	database.UpdateTransaction(*t)
 
 	primitiveID2, _ := primitive.ObjectIDFromHex(Id2)
 	t2, _, _ := database.FindTransaction(primitiveID2)
 	t2.InverseTranactionId = Id1
-	database.UpdateTransaction(t2)
+	database.UpdateTransaction(*t2)
 
 	return err
 }
@@ -119,7 +137,7 @@ func Send(reqform string, c *routing.Context) error {
 //USER WILL MAKE A REFUND REQUEST IN RESPONSE OF WHICH
 //THE MERCHANT CAN MAKE A RESPONSE TO REFUND
 func RefundResponse(reqform string, c *routing.Context) error {
-
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	req := &models.RefundResponse{}
 	err := json.Unmarshal([]byte(reqform), req)
 	if err != nil {
@@ -128,6 +146,23 @@ func RefundResponse(reqform string, c *routing.Context) error {
 	pass, msg := ValidateRefundResponse(*req)
 	if !pass {
 		return errors.New(msg)
+	}
+	RefundId, _ := primitive.ObjectIDFromHex(req.TransactionID)
+	actualTransaction, pass, err := database.FindTransaction(RefundId)
+	if !pass {
+		log.Println(utility.Info("didnt pass"))
+	}
+	if err != nil {
+		log.Println(utility.Info(err))
+	}
+	log.Println(utility.Info(req.TransactionID))
+	log.Println(utility.Info(RefundId))
+	//TODO PUSH THIS LOGIC IN CANCEL FUNCTION SO
+	//DONT NEED TO  REDUNTIVELY FIND THE ACTUAL TRANSACTION
+	if actualTransaction.Info.To != req.Email {
+		log.Println(utility.Info(actualTransaction.Info.To))
+		log.Println(utility.Info(req.Email))
+		return errors.New("THIS MERCHANT DID NOT RECIEVE THE SAME TRANSACTION")
 	}
 
 	CancelTransaction(req.TransactionID, true)
@@ -153,6 +188,7 @@ func History(c *routing.Context) error {
 		fmt.Fprintf(c, "user not found")
 		return nil
 	}
+
 	if User.Password != password {
 		fmt.Fprintf(c, "Incorrect password")
 		return nil
@@ -160,7 +196,7 @@ func History(c *routing.Context) error {
 	LastTransactions := []models.Transaction{}
 	for _, Id := range User.History {
 		t, _, _ := database.FindTransaction(Id)
-		LastTransactions = append(LastTransactions, t)
+		LastTransactions = append(LastTransactions, *t)
 	}
 
 	his := fmt.Sprintf("%v", LastTransactions)

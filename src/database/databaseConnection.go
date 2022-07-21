@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/PankajKumar9/PaymentAPI/src/conf/constants"
 	"github.com/PankajKumar9/PaymentAPI/src/models"
 	"github.com/PankajKumar9/PaymentAPI/src/utility"
 	"go.mongodb.org/mongo-driver/bson"
@@ -54,8 +55,8 @@ func InsertUser(user models.User) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println("Inserted user in db with id", inserted.InsertedID)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println(utility.Info(fmt.Sprintf("Inserted user in db with id %v", inserted.InsertedID)))
 
 }
 func UpdateUser(user models.User) {
@@ -140,37 +141,65 @@ func FindUser(email string) (models.User, bool, error) {
 	return *users[0], true, nil
 }
 
-func FindTransaction(Id primitive.ObjectID) (models.Transaction, bool, error) {
+func FindTransaction(Id primitive.ObjectID) (*models.Transaction, bool, error) {
 	// A slice of tasks for storing the decoded documents
 
-	filter := bson.M{"Id": Id}
+	filter := bson.M{"_id": Id}
 	var transactions []*models.Transaction
 	u := models.Transaction{}
 	cur, err := CollectionTransactions.Find(context.Background(), filter)
 	if err != nil {
-		return u, false, err
+		return &u, false, err
 	}
 
 	for cur.Next(context.Background()) {
 		u = models.Transaction{}
 		err := cur.Decode(&u)
 		if err != nil {
-			return u, false, err
+			return &u, false, err
 		}
 
 		transactions = append(transactions, &u)
 	}
 
 	if err := cur.Err(); err != nil {
-		return u, false, err
+		return &u, false, err
 	}
 
 	// once exhausted, close the cursor
 	cur.Close(context.Background())
 
 	if len(transactions) == 0 {
-		return u, false, mongo.ErrNoDocuments
+		return &u, false, mongo.ErrNoDocuments
 	}
 
-	return *transactions[0], true, nil
+	return transactions[0], true, nil
+}
+func GetTransactionsDataForTesting() ([]*models.Transaction, bool, error) {
+	filter := bson.M{"kind": constants.PAYMENT}
+	var transactions []*models.Transaction
+	u := models.Transaction{}
+	cur, err := CollectionTransactions.Find(context.Background(), filter)
+	if err != nil {
+		return transactions, false, err
+	}
+
+	for cur.Next(context.Background()) {
+		u = models.Transaction{}
+		err := cur.Decode(&u)
+		if err != nil {
+			return transactions, false, err
+		}
+
+		transactions = append(transactions, &u)
+	}
+
+	if err := cur.Err(); err != nil {
+		return transactions, false, err
+	}
+
+	// once exhausted, close the cursor
+	cur.Close(context.Background())
+
+	return transactions, true, nil
 }
