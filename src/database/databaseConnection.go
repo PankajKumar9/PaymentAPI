@@ -77,13 +77,15 @@ func UpdateUser(user models.User) {
 }
 
 func InsertTransaction(transaction models.Transaction) primitive.ObjectID {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	transaction.Id = primitive.NewObjectID()
 	inserted, err := CollectionTransactions.InsertOne(context.Background(), transaction)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println(utility.Info(fmt.Sprintf("Inserted Transaction in db with id %v", inserted.InsertedID)))
 
-	fmt.Println("Inserted Transaction in db with id", inserted.InsertedID)
 	return transaction.Id
 }
 func UpdateTransaction(transaction models.Transaction) {

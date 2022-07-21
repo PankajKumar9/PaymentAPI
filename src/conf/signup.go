@@ -3,6 +3,7 @@ package conf
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/PankajKumar9/PaymentAPI/src/conf/constants"
 	"github.com/PankajKumar9/PaymentAPI/src/database"
@@ -135,4 +136,29 @@ func RefundResponse(reqform string, c *routing.Context) error {
 	CancelTransaction(t.InverseTranactionId, false)
 
 	return nil
+}
+
+func History(c *routing.Context) error {
+
+	fmt.Fprintf(c, "returning this string")
+	email := string(c.Request.Header.Peek("email"))
+	password := string(c.Request.Header.Peek("password"))
+
+	User, found, err := database.FindUser(email)
+	if err != nil {
+		fmt.Fprintf(c, fmt.Sprintf("%v", err))
+		return nil
+	}
+	if !found {
+		fmt.Fprintf(c, "user not found")
+		return nil
+	}
+	if User.Password != password {
+		fmt.Fprintf(c, "Incorrect password")
+		return nil
+	}
+	his := fmt.Sprintf("%v", User.History)
+	fmt.Fprintf(c, his)
+	return nil
+
 }

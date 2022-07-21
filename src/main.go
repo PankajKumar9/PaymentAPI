@@ -38,12 +38,14 @@ func drive() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	log.Println(utility.Info("setting up configurations"))
+	database.Init()
 	Router = routing.New()
 	RestAPIs.InitApis(Router)
-	database.Init()
 
 	//conf.CreateUsers()
-	fasthttp.ListenAndServe(":3001", Router.HandleRequest)
+	err := fasthttp.ListenAndServe(":3001", Router.HandleRequest)
+
+	log.Println(utility.Info(err))
 }
 
 // user1 := models.User{}

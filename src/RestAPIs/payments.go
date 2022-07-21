@@ -6,8 +6,8 @@ import (
 )
 
 func InitApis(r *routing.Router) {
-//TODO: paths to be in cosntants package
-	
+	//TODO: paths to be in cosntants package
+
 	r.Post("/api/signup", func(c *routing.Context) error {
 		return conf.Signup(string(c.PostBody()), c)
 		//return somefolder.somefunc(string(c.PostBody()), c)
@@ -23,5 +23,9 @@ func InitApis(r *routing.Router) {
 	r.Post("/api/send", func(c *routing.Context) error {
 		return conf.Send(string(c.PostBody()), c)
 		//return somefolder.somefunc(string(c.PostBody()), c)
+	})
+	r.Get("/api/history", func(c *routing.Context) error {
+		conf.History(c)
+		return nil
 	})
 }
