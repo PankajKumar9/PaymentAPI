@@ -157,7 +157,13 @@ func History(c *routing.Context) error {
 		fmt.Fprintf(c, "Incorrect password")
 		return nil
 	}
-	his := fmt.Sprintf("%v", User.History)
+	LastTransactions := []models.Transaction{}
+	for _, Id := range User.History {
+		t, _, _ := database.FindTransaction(Id)
+		LastTransactions = append(LastTransactions, t)
+	}
+
+	his := fmt.Sprintf("%v", LastTransactions)
 	fmt.Fprintf(c, his)
 	return nil
 
