@@ -17,10 +17,8 @@ type User struct {
 
 	Last4   []Transaction        `json:"last4" bson:"last4"`
 	History []primitive.ObjectID `json:"history" bson:"history"`
-
-	//TODO: Implement logic for auth
+	//TODO : remove the password field after testing
+	//only password hash is in user properties
 	Password     string `json:"password" bson:"password"`
 	PasswordHash string `json:"passwordhash" bson:"passwordhash"`
-	Remember     string `json:"remember" bson:"remember"`
-	RememberHash string `json:"rememberhash" bson:"rememberhash"`
 }

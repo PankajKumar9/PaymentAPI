@@ -13,10 +13,12 @@ import (
 	"github.com/PankajKumar9/PaymentAPI/src/models"
 	"github.com/PankajKumar9/PaymentAPI/src/utility"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func CreateUsers() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println(utility.Debug("Creating users from local json file"))
 	NewUsers, Err := ioutil.ReadFile("src/signupform_sample.json")
 	if Err != nil {
 		fmt.Println("Yahi fatt gya ye toh ")
@@ -29,6 +31,10 @@ func CreateUsers() {
 	log.Println(utility.Info(fmt.Sprintf("%v", err2)))
 
 	for _, u := range users {
+		pwBytes := []byte(u.Password + userPwPepper)
+		hashedBytes, _ := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
+		u.PasswordHash = string(hashedBytes)
+		u.Password = ""
 		database.InsertUser(u)
 	}
 }

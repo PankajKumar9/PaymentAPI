@@ -48,7 +48,7 @@ func GetCollectionTransactions() *mongo.Collection {
 }
 func InsertUser(user models.User) {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
+	log.Println(utility.Debug(user))
 	user.Id = primitive.NewObjectID()
 	log.Println(utility.Info(fmt.Sprintf("%v", user)))
 	inserted, err := CollectionUsers.InsertOne(context.Background(), user)

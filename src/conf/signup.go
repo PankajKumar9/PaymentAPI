@@ -5,19 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/PankajKumar9/PaymentAPI/src/conf/constants"
 	"github.com/PankajKumar9/PaymentAPI/src/database"
 	"github.com/PankajKumar9/PaymentAPI/src/models"
 	"github.com/PankajKumar9/PaymentAPI/src/utility"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 
 	routing "github.com/qiangxue/fasthttp-routing"
 )
 
-func Signup(signupform string, c *routing.Context) error {
+const userPwPepper = "abcd"
 
+func Signup(signupform string, c *routing.Context) error {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	newUser := &models.User{}
 	err := json.Unmarshal([]byte(signupform), newUser)
 	if err != nil {
@@ -28,6 +30,12 @@ func Signup(signupform string, c *routing.Context) error {
 	if !pass {
 		return errors.New(msg)
 	}
+	pwBytes := []byte(newUser.Password + userPwPepper)
+
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
+	newUser.PasswordHash = string(hashedBytes)
+	newUser.Password = ""
+	log.Println(utility.Debug(*newUser))
 	//todo check password == confirm password
 
 	//TODO will send password for hashing , wont write the password
@@ -59,11 +67,10 @@ func Credit(reqform string, c *routing.Context) error {
 	log.Println(utility.Info(User))
 	//TODO will deal with passwordHash and not the actual passwords
 
-	if strings.Compare(req.Password, User.Password) != 0 {
+	if !ValidatePassword(req.Password, User.PasswordHash) {
 		//TODO this static string has to be in constants package
-		log.Println(utility.Info(req.Password))
-		log.Println(utility.Info(User.Password))
-		return errors.New("INCORRECT PASSWORD")
+
+		return errors.New(constants.INCORRECT_PASSWORD)
 	}
 	err, _ = process(req.Email, req.Amount, constants.CREDIT, User, User.Email, User.Email, constants.CREDIT)
 	return err
@@ -81,9 +88,9 @@ func Debit(reqform string, c *routing.Context) error {
 	}
 	User, pass, _ := database.FindUser(req.Email)
 	//TODO will deal with passwordHash and not the actual passwords
-	if req.Password != User.Password {
+	if !ValidatePassword(req.Password, User.PasswordHash) {
 		//TODO this static string has to be in constants package
-		return errors.New("INCORRECT PASSWORD")
+		return errors.New(constants.INCORRECT_PASSWORD)
 	}
 	err, _ = process(req.Email, req.Amount, constants.DEBIT, User, User.Email, User.Email, constants.DEBIT)
 	return err
@@ -105,9 +112,9 @@ func Send(reqform string, c *routing.Context) error {
 	log.Println(utility.Info(*req))
 	User, pass, _ := database.FindUser(req.From.Email)
 	//TODO will deal with passwordHash and not the actual passwords
-	if req.From.Password != User.Password {
+	if !ValidatePassword(req.From.Password, User.PasswordHash) {
 		//TODO this static string has to be in constants package
-		return errors.New("INCORRECT PASSWORD")
+		return errors.New(constants.INCORRECT_PASSWORD)
 	}
 	if User.Type != constants.USER {
 		return errors.New(constants.INVALID_USER_TYPE)
@@ -159,6 +166,10 @@ func RefundResponse(reqform string, c *routing.Context) error {
 	log.Println(utility.Info(RefundId))
 	//TODO PUSH THIS LOGIC IN CANCEL FUNCTION SO
 	//DONT NEED TO  REDUNTIVELY FIND THE ACTUAL TRANSACTION
+	merchant, _, _ := database.FindUser(req.Email)
+	if !ValidatePassword(req.Password, merchant.PasswordHash) {
+		return errors.New(constants.INCORRECT_PASSWORD)
+	}
 	if actualTransaction.Info.To != req.Email {
 		log.Println(utility.Info(actualTransaction.Info.To))
 		log.Println(utility.Info(req.Email))
@@ -180,6 +191,7 @@ func History(c *routing.Context) error {
 	password := string(c.Request.Header.Peek("password"))
 
 	User, found, err := database.FindUser(email)
+
 	if err != nil {
 		fmt.Fprintf(c, fmt.Sprintf("%v", err))
 		return nil
@@ -188,11 +200,10 @@ func History(c *routing.Context) error {
 		fmt.Fprintf(c, "user not found")
 		return nil
 	}
-
-	if User.Password != password {
-		fmt.Fprintf(c, "Incorrect password")
-		return nil
+	if !ValidatePassword(password, User.PasswordHash) {
+		return errors.New(constants.INCORRECT_PASSWORD)
 	}
+
 	LastTransactions := []models.Transaction{}
 	for _, Id := range User.History {
 		t, _, _ := database.FindTransaction(Id)

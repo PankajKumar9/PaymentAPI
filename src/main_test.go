@@ -1,11 +1,5 @@
 package main
 
-
-
-
-
-
-
 // - User can send the money into merchant
 // - Merchant can send the money back to user (Refund)
 // - Merchant can withdraw money from her account

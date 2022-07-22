@@ -52,6 +52,7 @@ func StressTesting() {
 			test[i].ReqSend.To.Email = test[rand.Intn(5)].U.Email
 		}
 	}
+
 	for _, t := range test {
 		Lik := "http://localhost:3001/api/credit"
 		x := t.ReqCredit
@@ -61,43 +62,45 @@ func StressTesting() {
 		by := bytes.NewBuffer(S)
 		Postcalls(Lik, by)
 	}
-	for _, t := range test {
-		Lik := "http://localhost:3001/api/debit"
-		x := t.ReqDebit
-		log.Println(utility.Info(x))
-		x.Amount = float64(rand.Intn(200))
-		S, _ := json.Marshal(x)
-		by := bytes.NewBuffer(S)
-		Postcalls(Lik, by)
-	}
-	for i, t := range test {
-		if i == 5 {
-			break
+	for i := 0; i < 1000; i++ {
+		for _, t := range test {
+			Lik := "http://localhost:3001/api/debit"
+			x := t.ReqDebit
+			log.Println(utility.Info(x))
+			x.Amount = float64(rand.Intn(200))
+			S, _ := json.Marshal(x)
+			by := bytes.NewBuffer(S)
+			Postcalls(Lik, by)
 		}
-		Lik := "http://localhost:3001/api/send"
-		x := t.ReqSend
+		for i, t := range test {
+			if i == 5 {
+				break
+			}
+			Lik := "http://localhost:3001/api/send"
+			x := t.ReqSend
+			log.Println(utility.Info(x))
+
+			S, _ := json.Marshal(x)
+			by := bytes.NewBuffer(S)
+			Postcalls(Lik, by)
+		}
+		x, _, _ := database.GetTransactionsDataForTesting()
 		log.Println(utility.Info(x))
+		for _, transaction := range x {
+			req := models.RefundResponse{}
+			req.Email = transaction.Info.To
+			req.Password = GetPassword(req.Email)
+			req.TransactionID = transaction.Id.Hex()
+			log.Println(utility.Info(req))
+			Lik := "http://localhost:3001/api/refund"
+			x := req
+			log.Println(utility.Info(x))
 
-		S, _ := json.Marshal(x)
-		by := bytes.NewBuffer(S)
-		Postcalls(Lik, by)
-	}
-	x, _, _ := database.GetTransactionsDataForTesting()
-	log.Println(utility.Info(x))
-	for _, transaction := range x {
-		req := models.RefundResponse{}
-		req.Email = transaction.Info.To
-		req.Password = GetPassword(req.Email)
-		req.TransactionID = transaction.Id.Hex()
-		log.Println(utility.Info(req))
-		Lik := "http://localhost:3001/api/refund"
-		x := req
-		log.Println(utility.Info(x))
+			S, _ := json.Marshal(x)
+			by := bytes.NewBuffer(S)
+			Postcalls(Lik, by)
 
-		S, _ := json.Marshal(x)
-		by := bytes.NewBuffer(S)
-		Postcalls(Lik, by)
-
+		}
 	}
 
 }
