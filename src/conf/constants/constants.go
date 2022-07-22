@@ -12,4 +12,12 @@ const (
 	CANCELLATION          string = "CANCELLATION"
 	PAYMENT               string = "PAYMENT"
 	INCORRECT_PASSWORD    string = "INCORRECT PASSWORD"
+	SEND                  string = "send"
+	ORDERS                string = "orders"
+	DS                    string = "/"
+	SIGNUP                string = "signup"
+	REFUND                string = "refund"
+	API                   string = "api"
+	HISTORY               string = "history"
+	ALL                   string = "*"
 )
